@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Habits — HYPPO{% endblock %}
+
+{% block content %}
+<h2>Habits</h2>
+
+{% if habits|length < 5 %}
+<form method="post" action="/habits" style="margin-bottom:1rem;">
+    <input type="text" name="name" placeholder="New habit name" required>
+    <button type="submit">Add habit</button>
+</form>
+{% else %}
+<p><em>Maximum of 5 habits reached.</em></p>
+{% endif %}
+
+<ul id="habit-list">
+    {% for habit in habits %}
+        {% include "habits/_habit_row.html" %}
+    {% endfor %}
+    {% if not habits %}
+        <li>No habits yet. Add one above.</li>
+    {% endif %}
+</ul>
+{% endblock %}
