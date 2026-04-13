@@ -2,24 +2,33 @@ import uuid
 from datetime import date, datetime, UTC
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from api.app.core.database import get_db
+from api.app.core.database import get_db, AsyncSessionLocal
 from api.app.dependencies.auth import get_current_user
+from api.app.dependencies.session import get_session_id
 from api.app.models.entry import Entry, EntryType, ReviewStatus
 from api.app.models.user import User
 from api.app.schemas.entry import EntryCreate, EntryUpdate, EntryResponse, EntryListResponse
+from api.app.services.behavior import emit_event
 
 router = APIRouter(prefix="/api/v1/entries", tags=["entries"])
+
+
+async def _emit(user_id: uuid.UUID, event_type: str, data: dict, session_id: uuid.UUID | None):
+    async with AsyncSessionLocal() as bg_db:
+        await emit_event(bg_db, user_id, event_type, data, session_id)
 
 
 @router.post("", response_model=EntryResponse, status_code=status.HTTP_201_CREATED)
 async def create_entry(
     body: EntryCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    session_id: uuid.UUID | None = Depends(get_session_id),
 ):
     entry_id = body.id or uuid.uuid4()
 
@@ -49,6 +58,20 @@ async def create_entry(
     db.add(entry)
     await db.commit()
     await db.refresh(entry)
+
+    word_count = len(body.content.split()) if body.content else 0
+    background_tasks.add_task(
+        _emit,
+        current_user.id,
+        "entry_created",
+        {
+            "entry_type": body.type.value if body.type else "note",
+            "word_count": word_count,
+            "entry_date": str(entry_date),
+            "hour_of_day": datetime.now(UTC).hour,
+        },
+        session_id,
+    )
     return entry
 
 
@@ -106,8 +129,10 @@ async def get_entry(
 async def update_entry(
     entry_id: uuid.UUID,
     body: EntryUpdate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    session_id: uuid.UUID | None = Depends(get_session_id),
 ):
     result = await db.execute(
         select(Entry)
@@ -127,9 +152,25 @@ async def update_entry(
         if entry.review_status == ReviewStatus.pending:
             entry.review_status = ReviewStatus.reviewed
 
+    # Detect task completion
+    completed = (
+        body.attributes is not None and body.attributes.get("completed") is True
+        or (body.attributes and body.attributes.get("completed"))
+    )
+
     entry.updated_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(entry)
+
+    if completed and entry.type == EntryType.task:
+        background_tasks.add_task(
+            _emit,
+            current_user.id,
+            "task_completed",
+            {"entry_id": str(entry_id)},
+            session_id,
+        )
+
     return entry
 
 

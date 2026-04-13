@@ -1,12 +1,19 @@
 import uuid
 from datetime import date, datetime, UTC
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from api.app.core.database import get_db
+from api.app.core.database import get_db, AsyncSessionLocal
 from api.app.dependencies.auth import get_current_user
+from api.app.dependencies.session import get_session_id
+from api.app.services.behavior import emit_event
+
+
+async def _emit(user_id, event_type, data, session_id):
+    async with AsyncSessionLocal() as bg_db:
+        await emit_event(bg_db, user_id, event_type, data, session_id)
 from api.app.models.habit import Habit
 from api.app.models.entry import Entry, EntryType
 from api.app.models.user import User
@@ -80,8 +87,10 @@ async def list_habits(
 @router.post("/{habit_id}/checkin", response_model=HabitCheckinResponse)
 async def checkin_habit(
     habit_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    session_id: uuid.UUID | None = Depends(get_session_id),
 ):
     # Verify habit exists and belongs to user
     result = await db.execute(
@@ -127,6 +136,13 @@ async def checkin_habit(
     await db.commit()
 
     streak = await compute_streak(str(habit_id), current_user.id, db)
+    background_tasks.add_task(
+        _emit,
+        current_user.id,
+        "habit_checked",
+        {"habit_id": str(habit_id), "streak_at_time": streak},
+        session_id,
+    )
     return HabitCheckinResponse(
         entry_id=entry.id,
         habit_id=habit_id,

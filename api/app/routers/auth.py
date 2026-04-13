@@ -1,6 +1,7 @@
-from datetime import timedelta
+import uuid
+from datetime import timedelta, datetime, UTC
 
-from fastapi import APIRouter, Depends, HTTPException, Response, Cookie, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, Cookie, status
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -17,6 +18,14 @@ from api.app.core.security import (
 from api.app.models.user import User
 from api.app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, UserResponse
 from api.app.dependencies.auth import get_current_user
+from api.app.dependencies.session import get_session_id
+from api.app.core.database import AsyncSessionLocal
+from api.app.services.behavior import emit_event
+
+
+async def _emit(user_id, event_type, data, session_id):
+    async with AsyncSessionLocal() as bg_db:
+        await emit_event(bg_db, user_id, event_type, data, session_id)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -35,7 +44,13 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/token", response_model=TokenResponse)
-async def login(body: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
+async def login(
+    body: LoginRequest,
+    response: Response,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    session_id: uuid.UUID | None = Depends(get_session_id),
+):
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
     if not user or not verify_password(body.password, user.password_hash):
@@ -56,6 +71,13 @@ async def login(body: LoginRequest, response: Response, db: AsyncSession = Depen
         path="/api/v1/auth/refresh",
     )
 
+    background_tasks.add_task(
+        _emit,
+        user.id,
+        "user_login",
+        {"hour_of_day": datetime.now(UTC).hour, "day_of_week": datetime.now(UTC).weekday()},
+        session_id,
+    )
     return TokenResponse(access_token=access_token)
 
 
