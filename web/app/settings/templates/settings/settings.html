@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Settings — HYPPO{% endblock %}
+
+{% block content %}
+<h2>Settings</h2>
+
+<form method="post" action="/settings">
+    <div>
+        <label for="timezone">Timezone</label>
+        <input type="text" id="timezone" name="timezone"
+               value="{{ user.timezone if user else 'UTC' }}"
+               placeholder="e.g. America/Sao_Paulo">
+    </div>
+    <div>
+        <label for="theme">Theme</label>
+        <select id="theme" name="theme">
+            <option value="light" {% if (user.preferences or {}).get('theme') == 'light' %}selected{% endif %}>Light</option>
+            <option value="dark" {% if (user.preferences or {}).get('theme') == 'dark' %}selected{% endif %}>Dark</option>
+        </select>
+    </div>
+    <button type="submit">Save</button>
+</form>
+
+<hr>
+<h3>Data Export</h3>
+<p>Download all your data as JSON.</p>
+<a href="/settings/export" class="button">Export my data</a>
+{% endblock %}

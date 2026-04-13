@@ -1,6 +1,6 @@
 from datetime import date
 
-from flask import Flask, session, g
+from flask import Flask, session
 from flask_session import Session
 
 from web.config import Config
@@ -16,10 +16,12 @@ def create_app(config_class=Config):
     from web.app.log.routes import log_bp
     from web.app.journal.routes import journal_bp
     from web.app.habits.routes import habits_bp
+    from web.app.settings.routes import settings_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(log_bp)
     app.register_blueprint(journal_bp)
     app.register_blueprint(habits_bp)
+    app.register_blueprint(settings_bp)
 
     @app.get("/health")
     def health():
