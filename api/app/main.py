@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.app.core.config import settings
 from api.app.core.database import engine, Base
-from api.app.routers import auth
+from api.app.routers import auth, entries
 
 app = FastAPI(
     title="HYPPO API",
@@ -21,6 +21,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(entries.router)
 
 
 @app.get("/health")
