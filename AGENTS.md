@@ -24,6 +24,7 @@ Flask **never** queries the database directly. All data access goes through Fast
 - `web/app/__init__.py` — Flask app factory
 - `web/app/api_client.py` — **only** file in web/ that imports httpx
 - `alembic/versions/` — database migrations
+- `docs/solutions/` — documented solutions to past problems (bugs, architectural violations, best practices), organized by category with YAML frontmatter (`module`, `tags`, `problem_type`)
 
 ## Running
 
