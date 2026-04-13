@@ -1,0 +1,23 @@
+<form
+    hx-post="/entries"
+    hx-target="#entry-list"
+    hx-swap="afterbegin"
+    hx-on::after-request="this.reset()"
+>
+    <input type="hidden" name="log_date" value="{{ log_date }}">
+    <div style="display:flex; gap:0.5rem; align-items:flex-start;">
+        <textarea
+            name="content"
+            placeholder="Capture anything… (defaults to Note)"
+            rows="2"
+            required
+            style="flex:1;"
+        ></textarea>
+        <select name="type" title="Entry type">
+            <option value="note">Note</option>
+            <option value="task">Task</option>
+            <option value="event">Event</option>
+        </select>
+        <button type="submit">Add</button>
+    </div>
+</form>

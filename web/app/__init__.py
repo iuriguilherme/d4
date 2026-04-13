@@ -13,7 +13,9 @@ def create_app(config_class=Config):
     Session(app)
 
     from web.app.auth.routes import auth_bp
+    from web.app.log.routes import log_bp
     app.register_blueprint(auth_bp)
+    app.register_blueprint(log_bp)
 
     @app.get("/health")
     def health():

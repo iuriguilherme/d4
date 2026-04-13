@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Log {{ log_date }} — HYPPO{% endblock %}
+
+{% block content %}
+<div class="log-header">
+    <a href="/{{ prev_date }}">&larr;</a>
+    <h2>{{ "Today" if is_today else log_date }}</h2>
+    <a href="/{{ next_date }}">&rarr;</a>
+</div>
+
+{% include "log/_capture.html" %}
+
+<ul id="entry-list">
+    {% for entry in entries %}
+        {% include "log/_entry.html" %}
+    {% endfor %}
+    {% if not entries %}
+        <li id="empty-state">Nothing here yet. Capture something above.</li>
+    {% endif %}
+</ul>
+{% endblock %}
