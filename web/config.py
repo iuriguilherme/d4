@@ -1,0 +1,11 @@
+import os
+
+
+class Config:
+    SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "change-me-in-production")
+    SESSION_TYPE = "filesystem"
+    SESSION_FILE_DIR = "/tmp/flask_sessions"
+    SESSION_PERMANENT = False
+
+    FASTAPI_BASE_URL = os.environ.get("FASTAPI_BASE_URL", "http://localhost:8000")
+    ENVIRONMENT = os.environ.get("ENVIRONMENT", "development")

@@ -1,3 +1,27 @@
 .*
 !.gitignore
+!.env.example
 *.local.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Flask sessions
+/tmp/flask_sessions/
+flask_session/
+
+# Env
+.env
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/

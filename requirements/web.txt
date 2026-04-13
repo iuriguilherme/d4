@@ -1,0 +1,22 @@
+-r base.txt
+
+# Web framework
+flask==3.1.0
+flask-session==0.8.0
+
+# HTTP client (sole httpx import in web layer)
+httpx==0.28.1
+
+# Templating (included with Flask, but pin for clarity)
+jinja2==3.1.4
+markupsafe==3.0.2
+
+# Markdown rendering
+markdown==3.7
+
+# Testing
+pytest==8.3.4
+pytest-mock==3.14.0
+
+# Linting
+ruff==0.8.4
