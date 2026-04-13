@@ -8,17 +8,17 @@ from sqlalchemy import select, func
 from api.app.core.database import get_db, AsyncSessionLocal
 from api.app.dependencies.auth import get_current_user
 from api.app.dependencies.session import get_session_id
+from api.app.models.habit import Habit
+from api.app.models.entry import Entry, EntryType
+from api.app.models.user import User
+from api.app.schemas.habit import HabitCreate, HabitResponse, HabitCheckinResponse
 from api.app.services.behavior import emit_event
+from api.app.services.habit_streak import compute_streak
 
 
 async def _emit(user_id, event_type, data, session_id):
     async with AsyncSessionLocal() as bg_db:
         await emit_event(bg_db, user_id, event_type, data, session_id)
-from api.app.models.habit import Habit
-from api.app.models.entry import Entry, EntryType
-from api.app.models.user import User
-from api.app.schemas.habit import HabitCreate, HabitResponse, HabitCheckinResponse
-from api.app.services.habit_streak import compute_streak
 
 router = APIRouter(prefix="/api/v1/habits", tags=["habits"])
 

@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta, datetime, UTC
+from uuid import UUID  # explicit UUID type for refresh token validation
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, Cookie, status
 from jose import JWTError
@@ -90,8 +91,8 @@ async def refresh(refresh_token: str = Cookie(None), db: AsyncSession = Depends(
         payload = decode_token(refresh_token)
         if payload.get("type") != "refresh":
             raise JWTError("wrong type")
-        user_id = payload.get("sub")
-    except JWTError:
+        user_id = UUID(payload.get("sub", ""))
+    except (JWTError, ValueError):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
     result = await db.execute(select(User).where(User.id == user_id))

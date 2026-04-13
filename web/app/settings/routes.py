@@ -1,8 +1,7 @@
-import httpx
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, Response
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, Response
 
 from web.app import api_client
-from web.app.api_client import APIError, _headers, _base_url
+from web.app.api_client import APIError
 from web.app.auth.routes import login_required
 
 settings_bp = Blueprint("settings", __name__, template_folder="templates")
@@ -26,7 +25,6 @@ def settings_save():
     data["preferences"] = {"theme": theme}
     try:
         user = api_client.update_user_me(data)
-        # Update theme in session for immediate effect
         session["theme"] = theme
         flash("Settings saved.", "success")
     except APIError as e:
@@ -37,12 +35,10 @@ def settings_save():
 @settings_bp.get("/settings/export")
 @login_required
 def export_data():
-    with httpx.Client(base_url=_base_url()) as client:
-        r = client.get("/api/v1/users/me/export", headers=_headers())
-        r.raise_for_status()
+    content = api_client.export_data()
     return Response(
-        response=r.content,
-        status=r.status_code,
-        headers=dict(r.headers),
+        response=content,
+        status=200,
+        headers={"Content-Disposition": "attachment; filename=hyppo-export.json"},
         content_type="application/json",
     )

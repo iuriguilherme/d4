@@ -5,6 +5,9 @@ from api.app.core.config import settings
 from api.app.core.database import engine, Base
 from api.app.routers import auth, entries, habits, analytics, users
 
+if settings.environment == "production" and settings.jwt_secret == "change-me-in-production":
+    raise RuntimeError("JWT secret must be changed before running in production")
+
 app = FastAPI(
     title="HYPPO API",
     version="1.0.0",

@@ -152,11 +152,7 @@ async def update_entry(
         if entry.review_status == ReviewStatus.pending:
             entry.review_status = ReviewStatus.reviewed
 
-    # Detect task completion
-    completed = (
-        body.attributes is not None and body.attributes.get("completed") is True
-        or (body.attributes and body.attributes.get("completed"))
-    )
+    completed = bool(body.attributes and body.attributes.get("completed"))
 
     entry.updated_at = datetime.now(UTC)
     await db.commit()

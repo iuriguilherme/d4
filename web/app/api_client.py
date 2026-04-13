@@ -149,3 +149,10 @@ def update_user_me(data: dict) -> dict:
     with httpx.Client(base_url=_base_url()) as client:
         r = client.patch("/api/v1/users/me", json=data, headers=_headers())
         return _handle_response(r)
+
+
+def export_data() -> bytes:
+    with httpx.Client(base_url=_base_url(), timeout=30.0) as client:
+        r = client.get("/api/v1/users/me/export", headers=_headers())
+        r.raise_for_status()
+        return r.content

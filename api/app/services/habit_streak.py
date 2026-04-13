@@ -4,15 +4,19 @@ from sqlalchemy import select
 
 from api.app.models.entry import Entry, EntryType
 
+_MAX_STREAK_DAYS = 366
+
 
 async def compute_streak(habit_id: str, user_id, db: AsyncSession) -> int:
     """Walk back from today counting consecutive daily check-ins."""
+    earliest = date.today() - timedelta(days=_MAX_STREAK_DAYS)
     result = await db.execute(
         select(Entry.entry_date)
         .where(Entry.user_id == user_id)
         .where(Entry.type == EntryType.habit_checkin)
         .where(Entry.deleted_at.is_(None))
         .where(Entry.attributes["habit_id"].astext == habit_id)
+        .where(Entry.entry_date >= earliest)
         .order_by(Entry.entry_date.desc())
     )
     check_in_dates = {row[0] for row in result.all()}

@@ -15,10 +15,10 @@ router = APIRouter(prefix="/api/v1/users", tags=["users"])
 # Valid IANA timezones (simplified check — full validation via zoneinfo)
 def _validate_timezone(tz: str) -> bool:
     try:
-        import zoneinfo
-        zoneinfo.ZoneInfo(tz)
+        from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+        ZoneInfo(tz)
         return True
-    except Exception:
+    except (ZoneInfoNotFoundError, KeyError):
         return False
 
 
