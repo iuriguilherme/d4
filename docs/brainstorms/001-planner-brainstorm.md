@@ -1296,7 +1296,15 @@ These are real unresolved decisions that must be made before or during implement
 - `ArchetypeSnapshot` table (daily snapshot) — queryable history, moderate overhead
 - `BehaviorEvent` derived (scores always computed from events) — perfectly auditable, expensive to compute
 
-*Recommendation direction:* Start with JSON on User, add snapshot table in Phase 2 when you need history for adaptation.
+~~*Recommendation direction:* Start with JSON on User, add snapshot table in Phase 2 when you need history for adaptation.~~
+
+**DECIDED:** History since the beginning is non-negotiable. `BehaviorEvent` records are permanent and immutable — the raw behavioral history is the source of truth and must never be discarded. Archetype scores are always fully derivable from the complete event log. An `ArchetypeSnapshot` table is added for read performance (avoid recomputing from all events on every request), updated incrementally as new events arrive. The JSON blob on `User` is not used for scores — only for user-controlled preferences and settings.
+
+*Implications:*
+- `BehaviorEvent` table must have no TTL, no pruning, no archiving — append-only forever
+- `ArchetypeSnapshot` stores daily score vectors (one row per user per day)
+- Score queries read from the latest snapshot, not from raw events
+- The event log enables future features: replay, trend visualization, "how you've changed over a year"
 
 ---
 
@@ -1311,7 +1319,15 @@ These are real unresolved decisions that must be made before or during implement
 - In-process with `httpx.AsyncClient` to `TestClient` — hybrid, complex
 - Shared database access (Flask reads DB directly) — defeats the purpose of the API layer
 
-*Recommendation direction:* HTTP calls with `httpx`. Accept the ~1ms latency. The architectural cleanliness is worth it.
+**DECIDED:** Flask and FastAPI run as separate processes. Communication is via HTTP using `httpx`. In-process calls and shared database access are explicitly ruled out.
+
+*Implications:*
+- Flask is a true HTTP client of the FastAPI service — no shared Python state
+- Both processes can be deployed, scaled, and restarted independently
+- FastAPI remains the single point of data access; Flask never touches the database directly
+- Service URL is configurable via environment variable (e.g. `FASTAPI_BASE_URL`) for dev/prod parity
+
+*Open research note:* HTTP is the baseline decision. Before Phase 2, research whether more efficient secure IPC methods are appropriate for same-host deployments — candidates include Unix domain sockets (lower overhead than TCP loopback), gRPC (typed contracts, binary protocol), or message queues (async decoupling). Evaluate against the mobile-readiness requirement: the chosen protocol must not prevent FastAPI from serving mobile clients over standard HTTP/HTTPS.
 
 ---
 
@@ -1327,7 +1343,25 @@ These are real unresolved decisions that must be made before or during implement
 - ML classification (overkill for MVP, could be Phase 3+)
 - Default to note, user promotes to task — reversal is easy
 
-*Recommendation direction:* Default to note with a one-click promote-to-task affordance. Use keyword heuristics as hints (show "looks like a task — make it one?" nudge).
+**DECIDED:** The capture box is a writing-first, zero-friction surface. The system must never interrupt or challenge the user during writing. All captured text defaults to the simplest available type: **note**.
+
+*The two-mindset principle:* Writing and reviewing are distinct cognitive modes and must be treated as separate workflows. Classification belongs to the review mindset, not the capture mindset.
+
+*Post-save review flow:*
+- Every newly captured note is automatically flagged as "pending review"
+- During the review workflow (a dedicated, separate context), the user is presented with the note and can be asked: "Would you like to convert this to a task, event, or goal?"
+- System heuristics (keyword signals, patterns, context) may pre-suggest a type as a hint — but never apply it automatically
+- The user confirms or dismisses in review; the note remains a note until explicitly converted
+
+*Power user escape hatch:*
+- A type selector is available in all interfaces for users who want to set the type at capture time
+- This is a secondary affordance — visible but not prominent — so it does not distract default users
+- Power users may also set type during inline editing, not only during capture
+
+*Implications for data model:*
+- Notes gain a `review_status` field: `pending | reviewed | dismissed`
+- Heuristic signals are stored as metadata on the note (not applied as the type)
+- The review queue is a first-class UI surface, not an afterthought
 
 ---
 

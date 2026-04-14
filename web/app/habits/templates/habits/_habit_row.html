@@ -1,0 +1,12 @@
+<li id="habit-{{ habit.id }}" class="habit-row" style="border-left: 4px solid {{ habit.color }}; padding: 0.5rem;">
+    <span class="habit-name">{{ habit.name }}</span>
+    <span class="habit-streak">🔥 {{ habit.streak }} day streak</span>
+    <button
+        hx-post="/habits/{{ habit.id }}/checkin"
+        hx-target="#habit-{{ habit.id }}"
+        hx-swap="outerHTML"
+    >Check in</button>
+    <form method="post" action="/habits/{{ habit.id }}/delete" style="display:inline;">
+        <button type="submit" onclick="return confirm('Delete this habit?')">✕</button>
+    </form>
+</li>

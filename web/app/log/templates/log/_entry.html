@@ -1,0 +1,23 @@
+<li id="entry-{{ entry.id }}" class="entry entry-{{ entry.type }}{% if entry.attributes and entry.attributes.get('completed') %} completed{% endif %}">
+    {% if entry.type == "task" %}
+        <input
+            type="checkbox"
+            {% if entry.attributes and entry.attributes.get('completed') %}checked{% endif %}
+            hx-patch="/entries/{{ entry.id }}"
+            hx-vals='{"attributes": {"completed": true}}'
+            hx-target="#entry-{{ entry.id }}"
+            hx-swap="outerHTML"
+        >
+    {% endif %}
+
+    <span class="entry-content {% if entry.attributes and entry.attributes.get('completed') %}strikethrough{% endif %}">
+        {{ entry.content }}
+    </span>
+
+    <span class="entry-meta">
+        <span class="entry-type">{{ entry.type }}</span>
+        {% if entry.review_status == "pending" %}
+            <span class="badge pending" title="In review queue">⬤</span>
+        {% endif %}
+    </span>
+</li>

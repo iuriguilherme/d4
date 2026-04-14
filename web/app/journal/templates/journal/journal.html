@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Journal {{ journal_date }} — HYPPO{% endblock %}
+
+{% block content %}
+<h2>Journal — {{ journal_date }}</h2>
+
+<form id="journal-form">
+    <input type="hidden" name="entry_id" value="{{ entry_id or '' }}">
+
+    <div class="mood-selector">
+        <label>Mood:</label>
+        {% for i in range(1, 6) %}
+            <button
+                type="button"
+                class="mood-btn {% if mood == i %}selected{% endif %}"
+                data-mood="{{ i }}"
+                onclick="setMood({{ i }})"
+            >{{ ['😞','😕','😐','🙂','😄'][i-1] }}</button>
+        {% endfor %}
+        <input type="hidden" name="mood" id="mood-input" value="{{ mood or '' }}">
+    </div>
+
+    <textarea
+        name="content"
+        rows="12"
+        placeholder="{{ prompt_text }}"
+        hx-post="/journal/{{ journal_date }}"
+        hx-trigger="keyup changed delay:1500ms"
+        hx-target="#save-status"
+        hx-swap="innerHTML"
+        hx-include="#journal-form"
+    >{{ content }}</textarea>
+
+    <div>
+        <label>Prompt response:</label>
+        <textarea
+            name="prompt_response"
+            rows="3"
+            placeholder="{{ prompt_text }}"
+            hx-post="/journal/{{ journal_date }}"
+            hx-trigger="keyup changed delay:1500ms"
+            hx-target="#save-status"
+            hx-swap="innerHTML"
+            hx-include="#journal-form"
+        >{{ prompt_response }}</textarea>
+    </div>
+
+    <div id="save-status"></div>
+</form>
+
+<script>
+function setMood(val) {
+    document.getElementById('mood-input').value = val;
+    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector('[data-mood="' + val + '"]').classList.add('selected');
+    // trigger auto-save
+    htmx.trigger(document.querySelector('[name="content"]'), 'keyup');
+}
+</script>
+{% endblock %}
