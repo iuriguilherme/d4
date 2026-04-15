@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.app.core.config import settings
-from api.app.core.database import engine, Base
 from api.app.routers import auth, entries, habits, analytics, users
 
 if settings.environment == "production" and settings.jwt_secret == "change-me-in-production":
@@ -19,8 +18,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5000"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-Session-ID"],
 )
 
 app.include_router(auth.router)
