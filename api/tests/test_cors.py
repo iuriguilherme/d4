@@ -29,8 +29,9 @@ async def test_cors_preflight_forbidden_method(client: AsyncClient):
         "Access-Control-Request-Method": "PUT",
     }
     r = await client.options("/api/v1/auth/register", headers=headers)
-    # If method is not allowed, CORSMiddleware doesn't return CORS headers
-    assert "access-control-allow-methods" not in r.headers
+    # Verify the preflight request is rejected specifically for a disallowed CORS method
+    assert r.status_code == 400
+    assert r.text == "Disallowed CORS method"
 
 @pytest.mark.asyncio
 async def test_cors_preflight_forbidden_header(client: AsyncClient):
@@ -40,7 +41,8 @@ async def test_cors_preflight_forbidden_header(client: AsyncClient):
         "Access-Control-Request-Headers": "X-Malicious-Header",
     }
     r = await client.options("/api/v1/auth/register", headers=headers)
-    assert "access-control-allow-headers" not in r.headers
+    assert r.status_code == 400
+    assert r.text == "Disallowed CORS headers"
 
 @pytest.mark.asyncio
 async def test_cors_preflight_unauthorized_origin(client: AsyncClient):
@@ -49,4 +51,5 @@ async def test_cors_preflight_unauthorized_origin(client: AsyncClient):
         "Access-Control-Request-Method": "GET",
     }
     r = await client.options("/api/v1/auth/me", headers=headers)
-    assert "access-control-allow-origin" not in r.headers
+    assert r.status_code == 400
+    assert r.text == "Disallowed CORS origin"
