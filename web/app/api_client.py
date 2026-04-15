@@ -2,11 +2,10 @@
 Single httpx boundary for all FastAPI communication.
 This is the only file in web/ that imports httpx.
 """
-import uuid
 from typing import Any
 
 import httpx
-from flask import current_app, session, redirect, url_for, flash
+from flask import current_app, session, flash
 
 
 def _base_url() -> str:
