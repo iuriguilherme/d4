@@ -12,15 +12,14 @@ from api.app.models.tag import Tag
 
 def _serialize(obj) -> dict:
     """Convert SQLAlchemy model to JSON-serializable dict."""
-    result = {}
-    for col in obj.__table__.columns:
-        val = getattr(obj, col.name)
-        if isinstance(val, datetime):
-            val = val.isoformat()
-        elif isinstance(val, uuid.UUID):
-            val = str(val)
-        result[col.name] = val
-    return result
+    return {
+        c.name: (
+            v.isoformat() if isinstance(v := getattr(obj, c.name), datetime)
+            else str(v) if isinstance(v, uuid.UUID)
+            else v
+        )
+        for c in obj.__table__.columns
+    }
 
 
 async def build_export(user: User, db: AsyncSession) -> dict:
