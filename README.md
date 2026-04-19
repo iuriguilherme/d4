@@ -1,5 +1,7 @@
 # HYPPO
 
+[![Conventional Code](https://img.shields.io/badge/code-conventional%20🏭-red?style=for-the-badge)](https://github.com/zwbao/certified-organic-code)
+
 Hyper Personalized Planner and Organizer — a planner app that adapts to user behavior over time.
 
 ## Status
