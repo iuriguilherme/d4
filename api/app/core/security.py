@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta, UTC
 
-from jose import JWTError, jwt
+from jose import jwt
 from passlib.context import CryptContext
 
 from api.app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"])
 
 
 def hash_password(password: str) -> str:
@@ -35,5 +35,5 @@ def create_refresh_token(subject: str) -> str:
 
 
 def decode_token(token: str) -> dict:
-    """Raises JWTError on invalid/expired tokens."""
+    """Decodes a JWT token. Raises jose.jwt.JWTError on invalid/expired tokens."""
     return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
