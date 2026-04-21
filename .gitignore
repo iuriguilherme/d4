@@ -15,7 +15,8 @@ dist/
 build/
 
 # Flask sessions
-/tmp/flask_sessions/
+flask_sessions/
+flask_test_sessions/
 flask_session/
 
 # Env
