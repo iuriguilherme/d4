@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -9,7 +11,9 @@ class TestConfig(Config):
     TESTING = True
     SECRET_KEY = "test-secret"
     SESSION_TYPE = "filesystem"
-    SESSION_FILE_DIR = "/tmp/flask_test_sessions"
+    SESSION_FILE_DIR = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "flask_test_sessions"
+    )
     FASTAPI_BASE_URL = "http://fake-api"
     WTF_CSRF_ENABLED = False
 
